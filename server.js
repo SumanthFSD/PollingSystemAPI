@@ -35,7 +35,7 @@ app.post('/questions/:id/options/create', async (req, res) => {
     const { text } = req.body;
     question.options.push({ text });
     const savedQuestion = await question.save();
-    res.json(savedQuestion);
+    res.json(savedQuestion); //  If the question is found in the database, send a JSON response with the found question.
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -51,11 +51,23 @@ app.post('/options/:id/add_vote', async (req, res) => {
     const option = question.options.id(req.params.id);
     option.votes += 1;
     const savedQuestion = await question.save();
-    res.json(savedQuestion);
+
+    // Dynamically generate the link_to_vote URL based on the current server address
+    const linkToVote = `http://${req.get('host')}/options/${option._id}/add_vote`;
+
+    // Include the dynamically generated link_to_vote in the response
+    res.json({
+      ...savedQuestion.toObject(),
+      options: savedQuestion.options.map(opt => ({
+        ...opt.toObject(),
+        link_to_vote: `http://${req.get('host')}/options/${opt._id}/add_vote`
+      }))
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Delete a question
 app.delete('/questions/:id', async (req, res) => {
